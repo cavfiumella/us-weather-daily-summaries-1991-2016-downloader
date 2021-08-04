@@ -163,7 +163,7 @@ def pull_data(filename, start_date, end_date, stations, dataset="daily-summaries
 		stations_str += station + ","
 	stations = stations_str[:-1]
 
-	url = "https://www.ncei.noaa.gov/access/services/data/v1?dataset={}&startDate={}&endDate={}&stations={}&includeStationName=1&includeStationLocation=1&bbox={},{},{},{}&place={}".format(dataset, start_date, end_date, stations, *bbox, place)
+	url = "https://www.ncei.noaa.gov/access/services/data/v1?dataset={}&startDate={}&endDate={}&stations={}&includeStationName=1&includeStationLocation=1&bbox={},{},{},{}&place={}&units=metric".format(dataset, start_date, end_date, stations, *bbox, place)
 
 	try:
 		data = API_call(url, ext="csv", parse_dates=["DATE"])
