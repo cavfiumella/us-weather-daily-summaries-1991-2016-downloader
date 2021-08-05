@@ -177,14 +177,18 @@ def pull_data(filename, start_date, end_date, stations, dataset="daily-summaries
 
 
 # pull weather dataset from ncei.noaa.gov; output files are multiple so it is not suitable to use with pull_target
-def pull_weather(start_date, end_date, n_jobs=-1, progress=True):
+def pull_weather(start_date, end_date, n_jobs=-1, verbose=False, progress=True):
+
+	if verbose and progress:
+		logging.getLogger(__name__).debug("Cannot set verbose and progress True for pull_weather. Verbosity reduced.")
+		verbose=False
 
 	stations_batches = read_pkl("stations_batches.pkl")
 
 	# pull dataset
 	## many logs are generated within this parallel pool, because of this log level is reduced to debug redirecting all outputs to log file
 	jb.Parallel(n_jobs=n_jobs, backend="multiprocessing")(
-		jb.delayed(pull_target)(filename="weather_{}.pkl.xz".format(i), pull_func=partial(pull_data, filename="weather_{}.pkl.xz".format(i), log_level="debug"), log_level="debug", start_date=start_date, end_date=end_date, stations=stations_batch)
+		jb.delayed(pull_target)(filename="weather_{}.pkl.xz".format(i), pull_func=partial(pull_data, filename="weather_{}.pkl.xz".format(i), log_level="debug" if not verbose else "info"), log_level="debug" if not verbose else "info", start_date=start_date, end_date=end_date, stations=stations_batch)
 		for i,stations_batch in enumerate(tqdm(stations_batches, desc="Pull weather dataset", disable=not progress))
 	)
 
@@ -208,7 +212,12 @@ def run(progress=True):
 	gc.collect()
 	pull_target(filename="stations_batches.pkl", pull_func=pull_stations_batches)
 	gc.collect()
-	pull_weather(start_date=pd.Timestamp("1991-12-31").date(), end_date=pd.Timestamp("2016-01-02").date(), progress=progress)
+
+	## BUG:
+	# verbose=False and progress=True in pull_weather bring to bad progress bar behaviour when some "weather_*.pkl.xz" files are found.
+	# This is probably due to a bad interaction between tqdm and parallel execution"
+	pull_weather(start_date=pd.Timestamp("1991-12-31").date(), end_date=pd.Timestamp("2016-01-02").date(), verbose=True, progress=False)
+
 	gc.collect()
 
 
