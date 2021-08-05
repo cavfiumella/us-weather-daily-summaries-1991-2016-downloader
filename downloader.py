@@ -33,12 +33,12 @@ from tqdm.auto import tqdm, trange
 import joblib as jb
 
 
-def save_df(df, path, ext="pkl", log_level="info", **kwargs):
+def save_df(df, path, ext="csv", log_level="info", index=False, **kwargs):
 
 	if ext == "pkl":
 		df.to_pickle(path, **kwargs)
 	elif ext == "csv":
-		df.to_csv(path, **kwargs)
+		df.to_csv(path, index=index, **kwargs)
 	else:
 		raise NotImplementedError("unable to save dataframe with extension {}".format(ext))
 
@@ -113,7 +113,7 @@ def pull_definitions(dataset="daily-summaries", bbox=(71.351,-178.217,18.925,179
 	definitions = definitions.drop_duplicates()
 
 	logging.getLogger(__name__).debug("pulled definitions shape: {}".format(definitions.shape))
-	save_df(definitions, "definitions.pkl")
+	save_df(definitions, "definitions.csv")
 
 
 # interesting weather stations
@@ -188,7 +188,7 @@ def pull_weather(start_date, end_date, n_jobs=-1, verbose=False, progress=True):
 	# pull dataset
 	## many logs are generated within this parallel pool, because of this log level is reduced to debug redirecting all outputs to log file
 	jb.Parallel(n_jobs=n_jobs, backend="multiprocessing")(
-		jb.delayed(pull_target)(filename="weather_{}.pkl.xz".format(i), pull_func=partial(pull_data, filename="weather_{}.pkl.xz".format(i), log_level="debug" if not verbose else "info"), log_level="debug" if not verbose else "info", start_date=start_date, end_date=end_date, stations=stations_batch)
+		jb.delayed(pull_target)(filename="weather_{}.csv".format(i), pull_func=partial(pull_data, filename="weather_{}.csv".format(i), log_level="debug" if not verbose else "info"), log_level="debug" if not verbose else "info", start_date=start_date, end_date=end_date, stations=stations_batch)
 		for i,stations_batch in enumerate(tqdm(stations_batches, desc="Pull weather dataset", disable=not progress))
 	)
 
@@ -206,7 +206,7 @@ def pull_target(filename, pull_func, log_level="info", **kwargs):
 
 # main
 def run(progress=True):
-	pull_target(filename="definitions.pkl", pull_func=pull_definitions)
+	pull_target(filename="definitions.csv", pull_func=pull_definitions)
 	gc.collect()
 	pull_target(filename="stations.pkl", pull_func=pull_stations, progress=progress)
 	gc.collect()
@@ -214,7 +214,7 @@ def run(progress=True):
 	gc.collect()
 
 	## BUG:
-	# verbose=False and progress=True in pull_weather bring to bad progress bar behaviour when some "weather_*.pkl.xz" files are found.
+	# verbose=False and progress=True in pull_weather bring to bad progress bar behaviour when some "weather_*.csv" files are found.
 	# This is probably due to a bad interaction between tqdm and parallel execution"
 	pull_weather(start_date=pd.Timestamp("1991-12-31").date(), end_date=pd.Timestamp("2016-01-02").date(), verbose=True, progress=False)
 

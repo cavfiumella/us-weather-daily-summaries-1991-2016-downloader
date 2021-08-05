@@ -1,7 +1,9 @@
+# logs
+*.log
+
 # datasets files
-*.sqlite
+*.csv
 *.pkl
-*.pkl.xz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
