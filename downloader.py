@@ -185,7 +185,7 @@ def pull_weather(start_date, end_date, n_jobs=-1, progress=True):
 	## many logs are generated within this parallel pool, because of this log level is reduced to debug redirecting all outputs to log file
 	jb.Parallel(n_jobs=n_jobs, backend="multiprocessing")(
 		jb.delayed(pull_target)(filename="weather_{}.pkl.xz".format(i), pull_func=partial(pull_data, filename="weather_{}.pkl.xz".format(i)), start_date=start_date, end_date=end_date, stations=stations_batch, log_level="debug")
-		for i,stations_batch in tqdm(enumerate(stations_batches), desc="Pull weather dataset", disable=not progress)
+		for i,stations_batch in enumerate(tqdm(stations_batches, desc="Pull weather dataset", disable=not progress))
 	)
 
 
